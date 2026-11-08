@@ -1,0 +1,19 @@
+[Unit]
+Description=Local AI Agent API and Web Interface
+After=default.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/ai-projects/ai-projects
+Environment=AGENT_HOST=127.0.0.1
+Environment=AGENT_PORT=8765
+Environment=PYTHONUNBUFFERED=1
+Environment=PYTHONDONTWRITEBYTECODE=1
+UMask=0077
+PrivateTmp=true
+ExecStart=%h/miniconda3/bin/conda run --no-capture-output -n ai-agents python -m agents.server
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target

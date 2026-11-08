@@ -1,0 +1,86 @@
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    runtime: nvidia
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+    ports:
+      - "127.0.0.1:11434:11434"
+    volumes:
+      - ./ollama:/root/.ollama
+    networks:
+      - local-ai
+    restart: unless-stopped
+
+  # stable-diffusion:
+  #   image: lscr.io/linuxserver/stable-diffusion-webui:latest
+  #   container_name: stable-diffusion
+  #   runtime: nvidia
+  #   environment:
+  #     - PUID=1000
+  #     - PGID=1000
+  #     - TZ=Etc/UTC
+  #     - NVIDIA_VISIBLE_DEVICES=all
+  #     - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+  #   ports:
+  #     - "7860:7860"
+  #   volumes:
+  #     - ./stable-diffusion:/config
+  #   restart: unless-stopped
+  stable-diffusion:
+    image: local/ai-projects-comfyui:v0.42.1
+    build:
+      context: .
+      dockerfile: Dockerfile.comfyui
+    container_name: stable-diffusion
+    gpus: all
+    ports:
+      - "127.0.0.1:1111:1111"
+      - "127.0.0.1:8188:8188"
+      - "127.0.0.1:18188:8188"
+    environment:
+      - WEB_ENABLE_AUTH=true
+      - WEB_USER=${COMFYUI_WEB_USER}
+      - WEB_PASSWORD=${COMFYUI_WEB_PASSWORD}
+      - CF_QUICK_TUNNELS=false
+      - SUPERVISOR_NO_AUTOSTART=syncthing
+      - AUTO_UPDATE=false
+      - COMFYUI_ARGS=--output-directory /workspace/outputs/images
+    volumes:
+      - ./stable-diffusion:/workspace
+      - ./outputs/images:/workspace/outputs/images
+      - ./stable-diffusion/models/checkpoints:/opt/ComfyUI/models/checkpoints
+      - ./stable-diffusion/models/diffusion_models:/opt/ComfyUI/models/diffusion_models
+      - ./stable-diffusion/models/text_encoders:/opt/ComfyUI/models/text_encoders
+      - ./stable-diffusion/models/vae:/opt/ComfyUI/models/vae
+      - ./stable-diffusion/config/ComfyUI-Manager/.enable-cli-only-mode:/opt/ComfyUI/custom_nodes/ComfyUI-Manager/.enable-cli-only-mode:ro
+    networks:
+      - local-ai
+    restart: unless-stopped
+
+  whisper:
+    build:
+      context: ./whisper
+      dockerfile: Dockerfile
+    container_name: whisper
+    gpus: all
+    environment:
+      WHISPER_MODEL: small
+      WHISPER_DEVICE: cuda
+      WHISPER_COMPUTE_TYPE: float16
+      WHISPER_DOWNLOAD_ROOT: /models
+      WHISPER_OUTPUT_DIR: /outputs/audio/transcriptions
+      PIPER_MODEL: /models/tts/pt_BR-faber-medium.onnx
+    ports:
+      - "127.0.0.1:8001:8000"
+    volumes:
+      - ./whisper/models:/models
+      - ./outputs/audio:/outputs/audio
+    networks:
+      - local-ai
+    restart: unless-stopped
+
+networks:
+  local-ai:
+    internal: ${AI_OFFLINE_MODE:-true}

@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light dark">
+    <title>Agente local</title>
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/app.js" defer></script>
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">AI PROJECTS · PROCESSAMENTO LOCAL</p>
+          <h1>Agente local</h1>
+          <p class="subtitle">Converse com os modelos disponíveis neste computador.</p>
+        </div>
+        <div class="topbar-actions">
+          <button id="theme-toggle" class="button button-secondary theme-toggle" type="button" aria-pressed="false">
+            <span id="theme-icon" aria-hidden="true">☾</span>
+            <span id="theme-label">Tema escuro</span>
+          </button>
+          <div id="service-status" class="service-status" role="status">
+            <span class="status-dot"></span>
+            <span>Conectando ao backend local…</span>
+          </div>
+        </div>
+      </header>
+
+      <section class="workspace" aria-label="Conversa">
+        <aside class="settings-panel">
+          <h2>Configuração</h2>
+          <label for="conversation-select">Conversa</label>
+          <select id="conversation-select" disabled>
+            <option value="">Carregando conversas…</option>
+          </select>
+          <div class="conversation-actions">
+            <button id="new-conversation" class="button button-secondary" type="button">
+              Nova conversa
+            </button>
+            <button id="rename-conversation" class="button button-secondary" type="button" disabled>
+              Renomear
+            </button>
+          </div>
+          <button id="clear-history" class="button button-secondary clear-history" type="button" disabled>
+            Excluir conversa atual
+          </button>
+          <button id="gallery-toggle" class="button button-secondary gallery-toggle" type="button" aria-expanded="false">
+            Galeria de mídia
+          </button>
+          <button id="diagnostics-toggle" class="button button-secondary diagnostics-toggle" type="button" aria-expanded="false">
+            Diagnóstico local
+          </button>
+          <label for="task">Tipo de solicitação</label>
+          <select id="task">
+            <option value="text">Texto e conversa</option>
+            <option value="code">Programação e código</option>
+          </select>
+
+          <label for="model">Modelo instalado</label>
+          <select id="model">
+            <option value="">Automático pelo perfil</option>
+          </select>
+          <p id="route-hint" class="field-hint">Perfil de texto</p>
+
+          <label for="speech-voice">Voz de leitura</label>
+          <select id="speech-voice" disabled>
+            <option value="">Carregando vozes locais…</option>
+          </select>
+          <p id="speech-voice-notice" class="field-hint" hidden></p>
+
+          <div class="speech-controls">
+            <div class="speech-rate-label">
+              <label for="speech-rate">Velocidade da leitura</label>
+              <output id="speech-rate-value" for="speech-rate">1.00×</output>
+            </div>
+            <input id="speech-rate" type="range" min="0.8" max="1.25" step="0.05" value="1">
+            <div class="speech-control-buttons">
+              <button id="repeat-speech" class="button button-secondary" type="button" disabled>
+                Repetir leitura
+              </button>
+              <button id="stop-speech" class="button button-secondary" type="button" disabled>
+                Parar
+              </button>
+            </div>
+          </div>
+
+          <label class="check-row" for="generate-image">
+            <input id="generate-image" type="checkbox">
+            <span>Adicionar imagem relacionada à mensagem</span>
+          </label>
+          <label class="check-row" for="generate-video">
+            <input id="generate-video" type="checkbox">
+            <span>Gerar vídeo curto local (pode levar alguns minutos)</span>
+          </label>
+          <label class="check-row" for="speak-answer">
+            <input id="speak-answer" type="checkbox">
+            <span>Ler a resposta em voz alta (síntese local)</span>
+          </label>
+
+          <div class="local-note">
+            <strong>Execução local</strong>
+            <p>O chat chama o Ollama local. O microfone usa Whisper local; a leitura usa Piper ou Kokoro, com modelos baixados explicitamente para este computador.</p>
+            <p>Pedidos explícitos de imagem ou vídeo geram a mídia local e recebem uma confirmação própria. O piloto de vídeo usa Wan2.1 em 832×480 e cerca de 1,4 s; leva alguns minutos nesta GPU. As conversas ficam em SQLite neste computador e podem ser excluídas acima.</p>
+            <p>Os modelos não são baixados automaticamente.</p>
+          </div>
+        </aside>
+
+        <section class="chat-panel" aria-label="Mensagens do chat">
+          <section id="gallery-panel" class="gallery-panel" aria-label="Galeria de mídia" hidden>
+            <header class="gallery-header">
+              <div>
+                <h2>Galeria de mídia</h2>
+                <p>Imagens e vídeos gerados e registrados nas conversas locais.</p>
+              </div>
+              <button id="gallery-refresh" class="button button-secondary" type="button">
+                Atualizar
+              </button>
+            </header>
+            <div id="gallery-grid" class="gallery-grid" aria-live="polite"></div>
+          </section>
+          <section id="diagnostics-panel" class="diagnostics-panel" aria-label="Diagnóstico local" hidden>
+            <header class="gallery-header">
+              <div>
+                <h2>Diagnóstico local</h2>
+                <p id="diagnostics-checked-at">Estado dos serviços e recursos deste computador.</p>
+              </div>
+              <button id="diagnostics-refresh" class="button button-secondary" type="button">
+                Atualizar
+              </button>
+            </header>
+            <div id="diagnostics-grid" class="diagnostics-grid" aria-live="polite"></div>
+          </section>
+          <div id="messages" class="messages" aria-live="polite">
+            <div class="welcome-card">
+              <span class="welcome-icon" aria-hidden="true">✦</span>
+              <h2>Como posso ajudar?</h2>
+              <p>Escolha um perfil, escreva uma mensagem ou use o microfone.</p>
+            </div>
+          </div>
+          <div id="activity" class="activity" role="status" hidden>
+            <span id="activity-message"></span>
+            <button id="cancel-job" class="button button-secondary" type="button" hidden>
+              Cancelar geração
+            </button>
+          </div>
+          <form id="composer" class="composer">
+            <label class="sr-only" for="prompt">Sua mensagem</label>
+            <textarea id="prompt" rows="2" maxlength="12000" placeholder="Escreva sua mensagem…" required></textarea>
+            <div class="composer-actions">
+              <div class="left-actions">
+                <button id="record" class="button button-secondary" type="button" aria-pressed="false">
+                  <span aria-hidden="true">●</span> <span>Falar</span>
+                </button>
+                <span class="local-only">Áudio processado localmente</span>
+              </div>
+              <button id="send" class="button button-primary" type="submit">Enviar</button>
+            </div>
+          </form>
+          <p class="footer-note">Serviço acessível somente por localhost · Sem conta ou serviços externos na interface</p>
+        </section>
+      </section>
+    </main>
+  </body>
+</html>

@@ -1,0 +1,13 @@
+FROM ghcr.io/ai-dock/comfyui@sha256:9f99d5383690f85f3f8eb8ccdde41ca3edfbfaecf41dcf53291741c1e8db297e
+
+ARG COMFYUI_REF=v0.42.1
+
+RUN git -C /opt/ComfyUI fetch --depth 1 origin \
+      "refs/tags/${COMFYUI_REF}:refs/tags/${COMFYUI_REF}" \
+    && git -C /opt/ComfyUI checkout --detach "${COMFYUI_REF}" \
+    && bash -lc 'source /opt/ai-dock/bin/venv-set.sh comfyui \
+      && "$COMFYUI_VENV_PIP" install --no-cache-dir -r /opt/ComfyUI/requirements.txt \
+      && "$COMFYUI_VENV_PIP" install --no-cache-dir --index-url https://download.pytorch.org/whl/cu128 "torch==2.7.0" "torchvision==0.22.0" "torchaudio==2.7.0" \
+      && "$COMFYUI_VENV_PIP" install --no-cache-dir "xformers==0.0.30" \
+      && "$COMFYUI_VENV_PIP" install --no-cache-dir "transformers==4.57.6" "h11>=0.13,<0.15" \
+      && "$COMFYUI_VENV_PIP" uninstall --yes httpx2 httpcore2'
